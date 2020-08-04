@@ -17,9 +17,9 @@ class SeleniumCrawler(webdriver.Chrome):
 
     def __init__(self, path2driver: str, visibility=False):
         self.__options = Options()
-        if visibility is True:
+        if visibility is False:
             self.__options.add_argument("--headless")
-        super(webdriver.Chrome, path2driver, options=self.__options)
+        super().__init__(path2driver, options=self.__options)
         self.__sql_db = None
 
     def insert_word(self, selector: str, value: str, sleep_time=0.1):
@@ -56,56 +56,59 @@ class SeleniumCrawler(webdriver.Chrome):
 
     def crawl_site(self, queue_table_name: str, length=1000, sleep_time=0.1) -> None:
         tmp_command = "select * from " + queue_table_name + " limit " + str(length)
-        tmp_df = self.__sql_db.execute(tmp_command)
-        # print(tmp_df)
-        if len(tmp_df) != 0:
-            self.__sql_db.execute("lock tables ctl_queue write;")
-            tmp_command = "select * from " + queue_table_name + " order by table_name limit " + str(length)
+        if self.__sql_db is None:
+            print("No sql_db exists")
+        else:
             tmp_df = self.__sql_db.execute(tmp_command)
-            tmp_command = "delete from " + queue_table_name + " limit " + str(length)
-            self.__sql_db.execute(tmp_command)
-            self.__sql_db.execute("unlock tables;")
-            tmp_df = tmp_df.to_numpy()
-            tmp_table_list = self.__sql_db.get_tables()
+            # print(tmp_df)
+            if len(tmp_df) != 0:
+                self.__sql_db.execute("lock tables ctl_queue write;")
+                tmp_command = "select * from " + queue_table_name + " order by table_name limit " + str(length)
+                tmp_df = self.__sql_db.execute(tmp_command)
+                tmp_command = "delete from " + queue_table_name + " limit " + str(length)
+                self.__sql_db.execute(tmp_command)
+                self.__sql_db.execute("unlock tables;")
+                tmp_df = tmp_df.to_numpy()
+                tmp_table_list = self.__sql_db.get_tables()
 
-            tmp_heads_list, tmp_heads_dtype = self.__sql_db.get_heads_dtype(queue_table_name, sql_transfer)
+                tmp_heads_list, tmp_heads_dtype = self.__sql_db.get_heads_dtype(queue_table_name, sql_transfer)
 
-            tmp_sqllike = PsuedoSQLFromCSV("")
-            tmp_sqllike.dtype = {'url': 'str', 'created': 'datetime', 'dict': 'str'}
-            tmp_sqllike.header = ['url', 'created', 'dict']
-            tmp_sqllike.data = list()
-            for data_line in tmp_df:
-                if data_line[1] not in tmp_table_list:
-                    tmp_command = "create table " + data_line[1] + "(url varchar(1000), created datetime, dict text);"
-                    self.__sql_db.execute(tmp_command)
+                tmp_sqllike = PsuedoSQLFromCSV("")
+                tmp_sqllike.dtype = {'url': 'str', 'created': 'datetime', 'dict': 'str'}
+                tmp_sqllike.header = ['url', 'created', 'dict']
+                tmp_sqllike.data = list()
+                for data_line in tmp_df:
+                    if data_line[1] not in tmp_table_list:
+                        tmp_command = "create table " + data_line[1] + "(url varchar(1000), created datetime, dict text);"
+                        self.__sql_db.execute(tmp_command)
 
-                tmp_order_list = list()
-                tmp_get_dict = dict()
-                tmp_click_dict = dict()
-                tmp_insert_dict = dict()
-                tmp_selector_dict = dict()
-                tmp_datetime = datetime.now()
+                    tmp_order_list = list()
+                    tmp_get_dict = dict()
+                    tmp_click_dict = dict()
+                    tmp_insert_dict = dict()
+                    tmp_selector_dict = dict()
+                    tmp_datetime = datetime.now()
 
-                if data_line[tmp_heads_list.index("order_list")] is not None:
-                    tmp_order_list = json.loads(data_line[tmp_heads_list.index("order_list")])
-                if data_line[tmp_heads_list.index("get_dict")] is not None:
-                    tmp_get_dict = json.loads(data_line[tmp_heads_list.index("get_dict")])
-                if data_line[tmp_heads_list.index("click_dict")] is not None:
-                    tmp_click_dict = json.loads(data_line[tmp_heads_list.index("click_dict")])
-                if data_line[tmp_heads_list.index("insert_dict")] is not None:
-                    tmp_insert_dict = json.loads(data_line[tmp_heads_list.index("insert_dict")])
-                if data_line[tmp_heads_list.index("selector_dict")] is not None:
-                    tmp_selector_dict = json.loads(data_line[tmp_heads_list.index("selector_dict")])
+                    if data_line[tmp_heads_list.index("order_list")] is not None:
+                        tmp_order_list = json.loads(data_line[tmp_heads_list.index("order_list")])
+                    if data_line[tmp_heads_list.index("get_dict")] is not None:
+                        tmp_get_dict = json.loads(data_line[tmp_heads_list.index("get_dict")])
+                    if data_line[tmp_heads_list.index("click_dict")] is not None:
+                        tmp_click_dict = json.loads(data_line[tmp_heads_list.index("click_dict")])
+                    if data_line[tmp_heads_list.index("insert_dict")] is not None:
+                        tmp_insert_dict = json.loads(data_line[tmp_heads_list.index("insert_dict")])
+                    if data_line[tmp_heads_list.index("selector_dict")] is not None:
+                        tmp_selector_dict = json.loads(data_line[tmp_heads_list.index("selector_dict")])
 
-                self.get(data_line[0])
-                self.dialog_block_wait()
-                # sleep(sleep_time)
-                tmp_result = self.routine4selenium(tmp_order_list, get_dict=tmp_get_dict, click_dict=tmp_click_dict,
-                                                   insert_dict=tmp_insert_dict, selector_dict=tmp_selector_dict,
-                                                   sleep_time=sleep_time)
-                tmp_result = json.dumps(tmp_result)
-                tmp_sqllike.data.append([data_line[0], tmp_datetime, tmp_result])
-            self.__sql_db.insert_data(data_line[1], tmp_sqllike)
+                    self.get(data_line[0])
+                    self.dialog_block_wait()
+                    # sleep(sleep_time)
+                    tmp_result = self.routine4selenium(tmp_order_list, get_dict=tmp_get_dict, click_dict=tmp_click_dict,
+                                                       insert_dict=tmp_insert_dict, selector_dict=tmp_selector_dict,
+                                                       sleep_time=sleep_time)
+                    tmp_result = json.dumps(tmp_result)
+                    tmp_sqllike.data.append([data_line[0], tmp_datetime, tmp_result])
+                self.__sql_db.insert_data(data_line[1], tmp_sqllike)
 
     def routine4selenium(self, order_list: list, get_dict=dict(), click_dict=dict(), insert_dict=dict(),
                          selector_dict=dict(), sleep_time=0.1) -> dict:

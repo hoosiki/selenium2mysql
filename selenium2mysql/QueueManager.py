@@ -9,7 +9,7 @@ class QueueManager(Transfer2SQLDB):
         """
         db_info = dict(host=<ip_address>, user=<user_name>, password=<password>, db=<db_name>, charset='UTF8MB4', port=<port>)
         """
-        super(QueueManager, self).__init__(info_dict)
+        super().__init__(info_dict)
 
     def make_queue(self, queue_table_name: str):
         tmp_table_list = self.get_tables()

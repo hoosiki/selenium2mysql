@@ -1,0 +1,13 @@
+MANIFEST.in
+README.md
+setup.py
+selenium2mysql/Json2Mysql.py
+selenium2mysql/QueueManager.py
+selenium2mysql/SeleniumCrawler.py
+selenium2mysql/__init__.py
+selenium2mysql/info.py
+selenium2mysql.egg-info/PKG-INFO
+selenium2mysql.egg-info/SOURCES.txt
+selenium2mysql.egg-info/dependency_links.txt
+selenium2mysql.egg-info/requires.txt
+selenium2mysql.egg-info/top_level.txt
