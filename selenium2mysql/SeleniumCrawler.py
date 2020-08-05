@@ -8,8 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.options import Options
-#from selenium.webdriver.common.keys import Keys
-#from selenium.webdriver import ActionChains
+from tqdm import tqdm
 from time import sleep
 
 
@@ -34,6 +33,7 @@ class SeleniumCrawler(webdriver.Chrome):
             print("not found selector : ", selector, Exception)
 
     def click_button(self, button_selector: str, sleep_time=0.1):
+        self.dialog_block_wait(button_selector)
         tmp_tag = self.find_element_by_css_selector(button_selector)
         try:
             tmp_tag.click()
@@ -57,7 +57,7 @@ class SeleniumCrawler(webdriver.Chrome):
         self.click_button(info_dict["login_button_selector"], sleep_time=0.5)
 
     def crawl_site(self, queue_table_name: str, length=1000, sleep_time=0.3) -> None:
-        tmp_command = "select * from " + queue_table_name + " limit " + str(length)
+        tmp_command: str = "select * from {0} limit {1}".format(queue_table_name, str(length))
         if self.__sql_db is None:
             print("No sql_db exists")
         else:
@@ -65,9 +65,9 @@ class SeleniumCrawler(webdriver.Chrome):
             # print(tmp_df)
             if len(tmp_df) != 0:
                 self.__sql_db.execute("lock tables ctl_queue write;")
-                tmp_command = "select * from " + queue_table_name + " order by table_name limit " + str(length)
+                tmp_command = "select * from {0} order by table_name limit {1}".format(queue_table_name, str(length))
                 tmp_df = self.__sql_db.execute(tmp_command)
-                tmp_command = "delete from " + queue_table_name + " limit " + str(length)
+                tmp_command = "delete from {0} limit {1}".format(queue_table_name, str(length))
                 self.__sql_db.execute(tmp_command)
                 self.__sql_db.execute("unlock tables;")
                 tmp_df = tmp_df.to_numpy()
@@ -75,13 +75,15 @@ class SeleniumCrawler(webdriver.Chrome):
                 tmp_heads_list, tmp_heads_dtype = self.__sql_db.get_heads_dtype(queue_table_name)
 
                 tmp_sqllike = PsuedoSQLFromCSV("")
-                tmp_sqllike.dtype = {'url': 'str', 'created': 'datetime', 'dict': 'str'}
-                tmp_sqllike.header = ['url', 'created', 'dict']
+                tmp_sqllike.dtype = dict(url='str', created='datetime', dict='str')
+                tmp_sqllike.header = ('url', 'created', 'dict')
                 tmp_sqllike.data = list()
-                for data_line in tmp_df:
+                for data_line in tqdm(tmp_df):
                     tmp_table_list = self.__sql_db.get_tables()
                     if data_line[1] not in tmp_table_list:
-                        tmp_command = "create table " + data_line[1] + "(url varchar(1000), created datetime, dict text);"
+                        tmp_command = "create table " + data_line[1] + "(url varchar(1000), created datetime, dict " \
+                                                                       "text); "
+                        print(tmp_command)
                         self.__sql_db.execute(tmp_command)
 
                     tmp_order_list = list()
@@ -120,22 +122,18 @@ class SeleniumCrawler(webdriver.Chrome):
         for key in order_list:
             if key in get_dict.keys():
                 self.get(get_dict[key])
-                #self.dialog_block_wait(get_dict)
-                #sleep(sleep_time)
             if key in click_dict.keys():
                 self.click_button(click_dict[key], sleep_time=sleep_time)
             if key in insert_dict.keys():
+                self.dialog_block_wait(insert_dict[key][0])
                 tmp_tag = self.find_element_by_css_selector(insert_dict[key][0])
                 tmp_tag.send_keys(insert_dict[key][1])
                 self.dialog_block_wait(insert_dict[key][0])
             if key in selector_dict.keys():
+                self.dialog_block_wait(selector_dict[key])
                 tmp_tag = self.find_element_by_css_selector(selector_dict[key])
                 tmp_dict[key] = tmp_tag.get_attribute("outerHTML")
         tmp_dict["is_successful"] = self.__is_successful(tmp_dict)
-        #if not tmp_dict["is_successful"] and self.__sleep_time < 0.6:
-        #    self.__sleep_time += 0.1
-        #    self.implicitly_wait(self.__sleep_time)
-        #    tmp_dict = self.routine4selenium(order_list, get_dict=get_dict, click_dict=click_dict, insert_dict=insert_dict, selector_dict=selector_dict, sleep_time=0.3)
         return tmp_dict
 
     def routine4short(self, get_dict=dict(), selector_dict=dict(), sleep_time=0.2) -> dict:
@@ -143,8 +141,8 @@ class SeleniumCrawler(webdriver.Chrome):
         for key in selector_dict.keys():
             if key in get_dict.keys():
                 self.get(get_dict[key])
-                #sleep(sleep_time)
             if key in selector_dict.keys():
+                self.dialog_block_wait(selector_dict[key])
                 tmp_tag = self.find_element_by_css_selector(selector_dict[key])
                 tmp_dict[key] = tmp_tag.get_attribute("outerHTML")
         tmp_dict["is_successful"] = self.__is_successful(tmp_dict)
@@ -153,9 +151,7 @@ class SeleniumCrawler(webdriver.Chrome):
     def dialog_block_wait(self, selector: str):
         try:
             wait = WebDriverWait(self, 5)
-            #wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, selector)))
-            #wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, selector)))
         except TimeoutException:
             pass
 

@@ -14,9 +14,9 @@ class QueueManager(Transfer2SQLDB):
     def make_queue(self, queue_table_name: str):
         tmp_table_list = self.get_tables()
         if queue_table_name not in tmp_table_list:
-            tmp_command = "create table crawler." + queue_table_name + "(table_name varchar(50), url varchar(200), order_list " \
-                                                               "text, get_dict text, click_dict text, insert_dict " \
-                                                               "text, selector_dict text); "
+            tmp_command = "create table crawler." + queue_table_name + "(url varchar(200), table_name varchar(50), order_list " \
+                                                                       "text, get_dict text, click_dict text, insert_dict " \
+                                                                       "text, selector_dict text); "
             self.execute(tmp_command)
         else:
             print(queue_table_name, "already exists")
@@ -41,7 +41,7 @@ class QueueManager(Transfer2SQLDB):
                     [tmp_url, table_name, tmp_order_list, tmp_get_dict, tmp_click_dict, tmp_insert_dict,
                      tmp_selector_dict])
 
-        self.execute("lock tables " + queue_table + " write;")
+        self.execute("lock tables crawler." + queue_table + " write;")
         self.insert_data("crawler." + queue_table, tmp_sqllike, exclude_history=True)
         self.execute("unlock tables;")
 
@@ -49,9 +49,7 @@ class QueueManager(Transfer2SQLDB):
         tmp_src_set = set(input_dict.keys())
         return len(tmp_src_set - set(self.get_keyword_dtype_dict().keys())) == 0
 
-    def get_keyword_dtype_dict(self) -> dict:
+    def get_head_dtype_dict(self) -> dict:
         tmp_df = self.bring_data_from_table("metainfo_share.head_dtype")
         tmp_num = tmp_df.to_numpy()
         return {tmp_num[i][0]: tmp_num[i][1] for i in range(len(tmp_num))}
-
-

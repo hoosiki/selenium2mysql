@@ -3,3 +3,4 @@ selenium
 dict
 validators
 bs4
+tqdm

@@ -1,36 +1,45 @@
 import json
 import pandas as pd
 from dict import dict
-from .QueueManager import QueueManager
 from bs4 import BeautifulSoup
 from datetime import datetime
+from datetime import timedelta
 from dateutil.parser import parse
 
 
 class Json2Mysql(object):
     def __init__(self, sql_db):
         self.__sql_db = sql_db
-        self.__functions = {"int": self.html2int, "float": self.html2float, "datetime": self.html2datetime,
-                            "str": self.html2str, "text": self.html2text, "bool": self.html2bool}
+        self.__functions = {"bigint": self.html2int, "float": self.html2float, "double": self.html2float,
+                            "datetime": self.html2datetime,
+                            "str": self.html2str, "text": self.html2text, "tinyint(1)": self.html2bool}
 
     def str2dict(self, dict_str: str):
         tmp_dict = json.loads(dict_str)
-        tmp_keyword_dtype_dict = self.__sql_db.get_keyword_dtype_dict()
+        tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
+        tmp_set = set(key for key in tmp_dict.keys()) - set(key for key in tmp_head_dtype_dict.keys())
+        self.__sql_db.insert_head_dtypes(list(tmp_set))
+        tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
         for key in tmp_dict.keys():
-            tmp_dict[key] = self.__functions[tmp_keyword_dtype_dict[key]](tmp_dict[key])
+            if "char" in tmp_head_dtype_dict[key]:
+                tmp_dict[key] = self.__functions["str"](tmp_dict[key])
+            else:
+                tmp_dict[key] = self.__functions[tmp_head_dtype_dict[key]](tmp_dict[key])
+        assert isinstance(tmp_dict, dict)
         return tmp_dict
 
-    def __get_results_from_table(self, table_name:str, elapsed_time=15.5) -> pd.DataFrame:
+    def get_results_from_table(self, table_name: str, elapsed_time=15.5) -> pd.DataFrame:
         tmp_now = datetime.now()
-        tmp_command = "select * from {} where created > {}".format(table_name, )
-        tmp_df = self.__sql_db.bring_data_from_table(table_name)
+        tmp_command = "select * from {} where created > \"{}\"".format(table_name,
+                                                                       tmp_now - timedelta(minutes=elapsed_time))
+        tmp_df = self.__sql_db.execute(tmp_command)
         tmp_df = tmp_df.to_numpy()
         tmp_list = list()
         for data_line in tmp_df:
-            tmp_dict = {"url": data_line[0], "create": data_line[1]}
-            tmp_dict.update(crawler.json.str2dict(data_line[2]))
+            tmp_dict = {"url": data_line[0], "created": data_line[1]}
+            tmp_dict.update(self.str2dict(data_line[2]))
             tmp_list.append(tmp_dict)
-
+        return pd.DataFrame(tmp_list)
 
     @staticmethod
     def html2int(input_html: str) -> int:
@@ -66,8 +75,6 @@ class Json2Mysql(object):
             return input_html
         else:
             return False
-
-
 
     @property
     def sql_db(self):
