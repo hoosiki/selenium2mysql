@@ -2,3 +2,4 @@ csv2sqllike
 selenium
 dict
 validators
+bs4

@@ -10,7 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 #from selenium.webdriver.common.keys import Keys
 #from selenium.webdriver import ActionChains
-#from time import sleep
+from time import sleep
 
 
 class SeleniumCrawler(webdriver.Chrome):
@@ -21,12 +21,14 @@ class SeleniumCrawler(webdriver.Chrome):
             self.__options.add_argument("--headless")
         super().__init__(path2driver, options=self.__options)
         self.__sql_db = None
+        #self.__sleep_time = 0.2
+        #self.implicitly_wait(self.__sleep_time)
 
     def insert_word(self, selector: str, value: str, sleep_time=0.1):
         tmp_tag = self.find_element_by_css_selector(selector)
         try:
             tmp_tag.send_keys(value)
-            self.dialog_block_wait()
+            self.dialog_block_wait(selector)
             # sleep(sleep_time)
         except Exception:
             print("not found selector : ", selector, Exception)
@@ -35,7 +37,7 @@ class SeleniumCrawler(webdriver.Chrome):
         tmp_tag = self.find_element_by_css_selector(button_selector)
         try:
             tmp_tag.click()
-            self.dialog_block_wait()
+            #self.dialog_block_wait(button_selector)
             # sleep(sleep_time)
         except Exception:
             print("not found selector : ", button_selector)
@@ -48,13 +50,13 @@ class SeleniumCrawler(webdriver.Chrome):
         click_button(info_dict["login_button_selector"], driver, sleep_time=0.5)
         """
         tmp_page = self.get(info_dict["login_page_url"])
-        self.dialog_block_wait()
+        self.dialog_block_wait(info_dict["id_selector"])
         # sleep(sleep_time)
         self.insert_word(info_dict["id_selector"], info_dict["id_str"], sleep_time=sleep_time)
         self.insert_word(info_dict["pw_selector"], info_dict["pw_str"], sleep_time=sleep_time)
         self.click_button(info_dict["login_button_selector"], sleep_time=0.5)
 
-    def crawl_site(self, queue_table_name: str, length=1000, sleep_time=0.1) -> None:
+    def crawl_site(self, queue_table_name: str, length=1000, sleep_time=0.3) -> None:
         tmp_command = "select * from " + queue_table_name + " limit " + str(length)
         if self.__sql_db is None:
             print("No sql_db exists")
@@ -69,15 +71,15 @@ class SeleniumCrawler(webdriver.Chrome):
                 self.__sql_db.execute(tmp_command)
                 self.__sql_db.execute("unlock tables;")
                 tmp_df = tmp_df.to_numpy()
-                tmp_table_list = self.__sql_db.get_tables()
 
-                tmp_heads_list, tmp_heads_dtype = self.__sql_db.get_heads_dtype(queue_table_name, sql_transfer)
+                tmp_heads_list, tmp_heads_dtype = self.__sql_db.get_heads_dtype(queue_table_name)
 
                 tmp_sqllike = PsuedoSQLFromCSV("")
                 tmp_sqllike.dtype = {'url': 'str', 'created': 'datetime', 'dict': 'str'}
                 tmp_sqllike.header = ['url', 'created', 'dict']
                 tmp_sqllike.data = list()
                 for data_line in tmp_df:
+                    tmp_table_list = self.__sql_db.get_tables()
                     if data_line[1] not in tmp_table_list:
                         tmp_command = "create table " + data_line[1] + "(url varchar(1000), created datetime, dict text);"
                         self.__sql_db.execute(tmp_command)
@@ -101,8 +103,7 @@ class SeleniumCrawler(webdriver.Chrome):
                         tmp_selector_dict = json.loads(data_line[tmp_heads_list.index("selector_dict")])
 
                     self.get(data_line[0])
-                    self.dialog_block_wait()
-                    # sleep(sleep_time)
+                    sleep(sleep_time)
                     tmp_result = self.routine4selenium(tmp_order_list, get_dict=tmp_get_dict, click_dict=tmp_click_dict,
                                                        insert_dict=tmp_insert_dict, selector_dict=tmp_selector_dict,
                                                        sleep_time=sleep_time)
@@ -111,7 +112,7 @@ class SeleniumCrawler(webdriver.Chrome):
                 self.__sql_db.insert_data(data_line[1], tmp_sqllike)
 
     def routine4selenium(self, order_list: list, get_dict=dict(), click_dict=dict(), insert_dict=dict(),
-                         selector_dict=dict(), sleep_time=0.1) -> dict:
+                         selector_dict=dict(), sleep_time=0.2) -> dict:
         """
         get_dict => click_dict => insert_dict => selector_dict
         """
@@ -119,40 +120,42 @@ class SeleniumCrawler(webdriver.Chrome):
         for key in order_list:
             if key in get_dict.keys():
                 self.get(get_dict[key])
-                self.dialog_block_wait()
-                # sleep(sleep_time)
+                #self.dialog_block_wait(get_dict)
+                #sleep(sleep_time)
             if key in click_dict.keys():
                 self.click_button(click_dict[key], sleep_time=sleep_time)
             if key in insert_dict.keys():
                 tmp_tag = self.find_element_by_css_selector(insert_dict[key][0])
                 tmp_tag.send_keys(insert_dict[key][1])
+                self.dialog_block_wait(insert_dict[key][0])
             if key in selector_dict.keys():
                 tmp_tag = self.find_element_by_css_selector(selector_dict[key])
                 tmp_dict[key] = tmp_tag.get_attribute("outerHTML")
         tmp_dict["is_successful"] = self.__is_successful(tmp_dict)
+        #if not tmp_dict["is_successful"] and self.__sleep_time < 0.6:
+        #    self.__sleep_time += 0.1
+        #    self.implicitly_wait(self.__sleep_time)
+        #    tmp_dict = self.routine4selenium(order_list, get_dict=get_dict, click_dict=click_dict, insert_dict=insert_dict, selector_dict=selector_dict, sleep_time=0.3)
         return tmp_dict
 
-    def routine4short(self, get_dict=dict(), selector_dict=dict(), sleep_time=0.1) -> dict:
+    def routine4short(self, get_dict=dict(), selector_dict=dict(), sleep_time=0.2) -> dict:
         tmp_dict = dict()
         for key in selector_dict.keys():
             if key in get_dict.keys():
                 self.get(get_dict[key])
-                self.dialog_block_wait()
-                # sleep(sleep_time)
+                #sleep(sleep_time)
             if key in selector_dict.keys():
                 tmp_tag = self.find_element_by_css_selector(selector_dict[key])
                 tmp_dict[key] = tmp_tag.get_attribute("outerHTML")
         tmp_dict["is_successful"] = self.__is_successful(tmp_dict)
         return tmp_dict
 
-    def dialog_block_wait(self):
+    def dialog_block_wait(self, selector: str):
         try:
             wait = WebDriverWait(self, 5)
-            # self.take_snapshot("dialog_block_wait_before.png")
-            wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'ui-dialog')))
-            # self.take_snapshot("dialog_block_wait_appear.png")
-            wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, 'ui-dialog')))
-            # self.take_snapshot("dialog_block_wait_disappear.png")
+            #wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
+            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, selector)))
+            #wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, selector)))
         except TimeoutException:
             pass
 
