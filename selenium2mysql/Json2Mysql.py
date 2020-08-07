@@ -11,10 +11,10 @@ class Json2Mysql(object):
     def __init__(self, sql_db):
         self.__sql_db = sql_db
         self.__functions = {"bigint": self.html2int, "float": self.html2float, "double": self.html2float,
-                            "datetime": self.html2datetime,
-                            "str": self.html2str, "text": self.html2text, "tinyint(1)": self.html2bool}
+                            "datetime": self.html2datetime, "str": self.html2str, "text": self.html2text,
+                            "tinyint(1)": self.html2bool}
 
-    def str2dict(self, dict_str: str):
+    def str2dict(self, dict_str: str) -> dict:
         tmp_dict = json.loads(dict_str)
         tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
         tmp_set = set(key for key in tmp_dict.keys()) - set(key for key in tmp_head_dtype_dict.keys())
@@ -25,7 +25,6 @@ class Json2Mysql(object):
                 tmp_dict[key] = self.__functions["str"](tmp_dict[key])
             else:
                 tmp_dict[key] = self.__functions[tmp_head_dtype_dict[key]](tmp_dict[key])
-        assert isinstance(tmp_dict, dict)
         return tmp_dict
 
     def get_results_from_table(self, table_name: str, elapsed_time=15.5) -> pd.DataFrame:
