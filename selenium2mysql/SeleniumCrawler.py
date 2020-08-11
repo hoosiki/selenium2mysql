@@ -18,6 +18,8 @@ class SeleniumCrawler(webdriver.Chrome):
         self.__options = Options()
         if visibility is False:
             self.__options.add_argument("--headless")
+            self.__options.add_argument('--no-sandbox')
+            self.__options.add_argument('--disable-dev-shm-usage')
         super().__init__(path2driver, options=self.__options)
         self.__sql_db = None
 

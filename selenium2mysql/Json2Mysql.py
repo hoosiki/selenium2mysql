@@ -47,13 +47,13 @@ class Json2Mysql(object):
         return int(tmp_str)
 
     @staticmethod
-    def html2float(input_html: str) -> int:
+    def html2float(input_html: str) -> float:
         tmp_soup = BeautifulSoup(input_html, "lxml")
         tmp_str = tmp_soup.text.strip().replace(",", "")
         return float(tmp_str)
 
     @staticmethod
-    def html2str(input_html: str) -> int:
+    def html2str(input_html: str) -> str:
         tmp_soup = BeautifulSoup(input_html, "lxml")
         tmp_str = tmp_soup.text.strip()
         return tmp_str
