@@ -1,37 +1,39 @@
+import json
 import sys
 import pathlib
 import random
 from pathlib import Path
+from csv2sqllike.PseudoSQLFromCSV import PsuedoSQLFromCSV
+from datetime import datetime
 from dict import dict
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.chrome.options import Options
+from tqdm import tqdm
 
 
-class SeleniumCrawler(webdriver.Chrome):
 
-    def __init__(self, path2driver: str, visibility=False, download_path=None):
-        self.__options = Options()
-        if visibility is False:
-            self.__options.add_argument("--headless")
-            self.__options.add_argument('--no-sandbox')
-            self.__options.add_argument('--disable-dev-shm-usage')
-            self.__options.add_argument('--dns-prefetch-disable')
-        self.__options.add_argument('disable-gpu')
-        self.__options.add_argument(
-            'user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) '
-            'Chrome/85.0.4183.102 Safari/537.36')
-        self.__options.add_argument('--lang=ko')
-        self.__options.add_argument('connection=keep-alive')
+class SeleniumCrawlerForPhantom(webdriver.PhantomJS):
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
+                  'application/signed-exchange;v=b3;q=0.9',
+        'Accept-Language': 'en-US,en;q=0.9,ja;q=0.8,ko;q=0.7,mt;q=0.6',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/85.0.4183.102 Safari/537.36',
+        'Connection': 'keep-alive'
+    }
 
-        if download_path is not None:
-            profile = {"plugins.plugins_list": [{"enabled": False, "name": "Chrome PDF Viewer"}],
-                       # Disable Chrome's PDF Viewer
-                       "download.default_directory": download_path, "download.extensions_to_open": "applications/pdf"}
-            self.__options.add_experimental_option("prefs", profile)
-        super().__init__(path2driver, options=self.__options)
+    for key, value in headers.items():
+        webdriver.DesiredCapabilities.PHANTOMJS['phantomjs.page.customHeaders.{}'.format(key)] = value
+    webdriver.DesiredCapabilities.PHANTOMJS[
+        'phantomjs.page.settings.useragent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (' \
+                                               'KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 '
+    del webdriver.DesiredCapabilities.PHANTOMJS['browserName']
+    del webdriver.DesiredCapabilities.PHANTOMJS['version']
+
+    def __init__(self, path2driver: str):
+        super().__init__(path2driver)
         self.__timeout = 3
         self.implicitly_wait(self.__timeout)
         self.set_page_load_timeout(3)
@@ -105,6 +107,99 @@ class SeleniumCrawler(webdriver.Chrome):
         self.insert_word(info_dict["pw_xpath"], info_dict["pw_str"], sleep_time=sleep_time)
         self.click_button(info_dict["login_button_xpath"], sleep_time=0.5)
 
+    def crawl_site(self, queue_table_name: str, scanned_url_table=None, func=None, length=1000, sleep_time=0.3) -> None:
+        tmp_command: str = "select * from {0} limit {1}".format(queue_table_name, str(length))
+        if self.__sql_db is None:
+            print("No sql_db exists")
+        else:
+            tmp_df = self.__sql_db.execute(tmp_command)
+            if len(tmp_df) != 0:
+                self.__sql_db.execute("lock tables {} write;".format(queue_table_name))
+                tmp_command = "select * from {0} limit {1}".format(queue_table_name, length)
+                tmp_df = self.__sql_db.execute(tmp_command)
+                tmp_command = "delete from {0} limit {1}".format(queue_table_name, str(length))
+                self.__sql_db.execute(tmp_command)
+                self.__sql_db.execute("unlock tables;")
+                tmp_df = tmp_df.to_numpy().tolist()
+
+                tmp_heads_list, tmp_heads_dtype = self.__sql_db.get_heads_dtype(queue_table_name)
+
+                tmp_sqllike = PsuedoSQLFromCSV("")
+                tmp_sqllike.dtype = dict(table_name='str', url='str', created='datetime', dict='str')
+                tmp_sqllike.header = ('table_name', 'url', 'created', 'dict')
+                tmp_sqllike.data = list()
+
+                if scanned_url_table:
+                    tmp_sqllike_urls = PsuedoSQLFromCSV("")
+                    tmp_sqllike_urls.dtype = dict(url='str')
+                    tmp_sqllike_urls.header = ['url']
+                    tmp_sqllike_urls.data = list()
+                for data_line in tqdm(tmp_df):
+                    tmp_table_list = self.__sql_db.get_tables()
+                    if data_line[1] not in tmp_table_list:
+                        tmp_command = "create table " + data_line[
+                            1] + "(table_name varchar(50), url varchar(120), created datetime, dict " \
+                                 "mediumtext); "
+                        print(tmp_command)
+                        self.__sql_db.execute(tmp_command)
+
+                    tmp_order_list = list()
+                    tmp_get_dict = dict()
+                    tmp_click_dict = dict()
+                    tmp_insert_dict = dict()
+                    tmp_select_dict = dict()
+                    tmp_xpath_dict = dict()
+                    tmp_class_name_dict = dict()
+                    tmp_datetime = datetime.now()
+
+                    tmp_table_name = data_line[tmp_heads_list.index("table_name")]
+                    if data_line[tmp_heads_list.index("order_list")] is not None:
+                        tmp_order_list = json.loads(data_line[tmp_heads_list.index("order_list")])
+                    if data_line[tmp_heads_list.index("get_dict")] is not None:
+                        tmp_get_dict = json.loads(data_line[tmp_heads_list.index("get_dict")])
+                    if data_line[tmp_heads_list.index("click_dict")] is not None:
+                        tmp_click_dict = json.loads(data_line[tmp_heads_list.index("click_dict")])
+                    if data_line[tmp_heads_list.index("insert_dict")] is not None:
+                        tmp_insert_dict = json.loads(data_line[tmp_heads_list.index("insert_dict")])
+                    if data_line[tmp_heads_list.index("select_dict")] is not None:
+                        tmp_select_dict = json.loads(data_line[tmp_heads_list.index("select_dict")])
+                    if data_line[tmp_heads_list.index("xpath_dict")] is not None:
+                        tmp_xpath_dict = json.loads(data_line[tmp_heads_list.index("xpath_dict")])
+                    if data_line[tmp_heads_list.index("class_dict")] is not None:
+                        tmp_class_name_dict = json.loads(data_line[tmp_heads_list.index("class_dict")])
+
+                    if not self.get_2(data_line[0]):
+                        self.log_error()
+                        continue
+                    tmp_result = self.routine4selenium(order_list=tmp_order_list, get_dict=tmp_get_dict,
+                                                       click_dict=tmp_click_dict,
+                                                       insert_dict=tmp_insert_dict, select_dict=tmp_select_dict,
+                                                       xpath_dict=tmp_xpath_dict,
+                                                       class_dict=tmp_class_name_dict, sleep_time=sleep_time)
+                    if tmp_result:
+                        if not tmp_result["is_successful"]:
+                            self.log_error()
+                            continue
+
+                        if func:
+                            tmp_result["url"] = data_line[0]
+                            func(tmp_result)
+                            tmp_sqllike.data.append(list(tmp_result.values()))
+                        else:
+                            tmp_result = json.dumps(tmp_result)
+                            tmp_sqllike.data.append([tmp_table_name, data_line[0], tmp_datetime, tmp_result])
+
+                        if scanned_url_table:
+                            tmp_sqllike_urls.data.append(data_line[0])
+
+                try:
+                    if func:
+                        tmp_sqllike.header = list(tmp_result.keys())
+                    self.__sql_db.insert_data(data_line[1], tmp_sqllike)
+                except Exception:
+                    tmp_sqllike.save_data_to_csv("test.csv")
+                if scanned_url_table:
+                    self.__sql_db.insert_data(scanned_url_table, tmp_sqllike_urls)
 
     def routine4selenium(self, order_list=list(), get_dict=dict(), click_dict=dict(), insert_dict=dict(),
                          select_dict=dict(), xpath_dict=dict(), class_dict=dict(), sleep_time=0.2) -> dict:
@@ -146,18 +241,6 @@ class SeleniumCrawler(webdriver.Chrome):
                     return None
                 self.dialog_block_wait_class_name(class_dict[key])
                 tmp_tag = self.find_element_by_class_name(class_dict[key])
-                tmp_dict[key] = tmp_tag.get_attribute("outerHTML")
-        tmp_dict["is_successful"] = self.__is_successful(tmp_dict)
-        return tmp_dict
-
-    def routine4short(self, get_dict=dict(), xpath_dict=dict(), sleep_time=0.2) -> dict:
-        tmp_dict = dict()
-        for key in xpath_dict.keys():
-            if key in get_dict.keys():
-                self.get_2(get_dict[key])
-            if key in xpath_dict.keys():
-                self.dialog_block_wait_xpath(xpath_dict[key])
-                tmp_tag = self.find_element_by_xpath(xpath_dict[key])
                 tmp_dict[key] = tmp_tag.get_attribute("outerHTML")
         tmp_dict["is_successful"] = self.__is_successful(tmp_dict)
         return tmp_dict
@@ -219,10 +302,3 @@ class SeleniumCrawler(webdriver.Chrome):
     def sql_db(self, sql_db):
         self.__sql_db = sql_db
 
-    @property
-    def options(self):
-        return self.__options
-
-    @options.setter
-    def options(self, options):
-        self.__options = options

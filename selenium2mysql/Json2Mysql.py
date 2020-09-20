@@ -14,20 +14,26 @@ class Json2Mysql(object):
                             "datetime": self.html2datetime, "str": self.html2str, "text": self.html2text,
                             "tinyint(1)": self.html2bool}
 
-    def str2dict(self, dict_str: str) -> dict:
+    def str2dict(self, dict_str: str, func_dict=dict()) -> dict:
         tmp_dict = json.loads(dict_str)
         tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
-        tmp_set = set(key for key in tmp_dict.keys()) - set(key for key in tmp_head_dtype_dict.keys())
+        tmp_set = set(key for key in tmp_dict.keys()) - set(key for key in tmp_head_dtype_dict.keys()) - set(key for key in func_dict.keys())
         self.__sql_db.insert_head_dtypes(list(tmp_set))
         tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
-        for key in tmp_dict.keys():
+        if not func_dict:
+            self.__functions.update(func_dict)
+        for key in list(tmp_dict.keys()) + list(func_dict.keys()):
             if "char" in tmp_head_dtype_dict[key]:
                 tmp_dict[key] = self.__functions["str"](tmp_dict[key])
             else:
-                tmp_dict[key] = self.__functions[tmp_head_dtype_dict[key]](tmp_dict[key])
+                if key in list(tmp_head_dtype_dict.keys()):
+                    tmp_dict[key] = self.__functions[tmp_head_dtype_dict[key]](tmp_dict[key])
+                else:
+                    tmp_dict.update(self.__functions[key](tmp_dict[key]))
+                    del tmp_dict[key]
         return tmp_dict
 
-    def get_results_from_table(self, table_name: str, elapsed_time=15.5) -> pd.DataFrame:
+    def get_results_from_table(self, table_name: str, func_dict=dict(), elapsed_time=15.5) -> pd.DataFrame:
         tmp_now = datetime.now()
         tmp_command = "select * from {} where created > \"{}\"".format(table_name,
                                                                        tmp_now - timedelta(minutes=elapsed_time))
@@ -36,7 +42,7 @@ class Json2Mysql(object):
         tmp_list = list()
         for data_line in tmp_df:
             tmp_dict = {"url": data_line[0], "created": data_line[1]}
-            tmp_dict.update(self.str2dict(data_line[2]))
+            tmp_dict.update(self.str2dict(data_line[2], func_dict=func_dict))
             tmp_list.append(tmp_dict)
         return pd.DataFrame(tmp_list)
 
