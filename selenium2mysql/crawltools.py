@@ -1,7 +1,9 @@
-import pyperclip
-import pyautogui
-from .__init__ import Crawler
 from pathlib import Path
+
+import pyautogui
+import pyperclip
+
+from .__init__ import Crawler
 
 
 def make_image_from_component_with_xpath(crawler: Crawler, xpath: str, image_path: str):

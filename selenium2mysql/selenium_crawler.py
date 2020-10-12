@@ -1,13 +1,14 @@
-import sys
 import pathlib
 import random
+import sys
 from pathlib import Path
+
 from dict import dict
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.chrome.options import Options
 
 
 class SeleniumCrawler(webdriver.Chrome):
@@ -104,7 +105,6 @@ class SeleniumCrawler(webdriver.Chrome):
         self.insert_word(info_dict["id_xpath"], info_dict["id_str"], sleep_time=sleep_time)
         self.insert_word(info_dict["pw_xpath"], info_dict["pw_str"], sleep_time=sleep_time)
         self.click_button(info_dict["login_button_xpath"], sleep_time=0.5)
-
 
     def routine4selenium(self, order_list=list(), get_dict=dict(), click_dict=dict(), insert_dict=dict(),
                          select_dict=dict(), xpath_dict=dict(), class_dict=dict(), sleep_time=0.2) -> dict:

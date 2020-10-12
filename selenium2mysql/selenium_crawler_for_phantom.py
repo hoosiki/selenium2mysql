@@ -1,17 +1,17 @@
 import json
-import sys
 import pathlib
 import random
-from pathlib import Path
-from csv2sqllike.PseudoSQLFromCSV import PsuedoSQLFromCSV
+import sys
 from datetime import datetime
+from pathlib import Path
+
+from csv2sqllike.PseudoSQLFromCSV import PsuedoSQLFromCSV
 from dict import dict
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
-
 
 
 class SeleniumCrawlerForPhantom(webdriver.PhantomJS):
@@ -298,4 +298,3 @@ class SeleniumCrawlerForPhantom(webdriver.PhantomJS):
     @sql_db.setter
     def sql_db(self, sql_db):
         self.__sql_db = sql_db
-

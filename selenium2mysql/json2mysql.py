@@ -1,10 +1,11 @@
 import json
-import pandas as pd
-from dict import dict
-from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import timedelta
+
+import pandas as pd
+from bs4 import BeautifulSoup
 from dateutil.parser import parse
+from dict import dict
 
 
 class Json2Mysql(object):
@@ -17,7 +18,8 @@ class Json2Mysql(object):
     def str2dict(self, dict_str: str, func_dict=dict()) -> dict:
         tmp_dict = json.loads(dict_str)
         tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
-        tmp_set = set(key for key in tmp_dict.keys()) - set(key for key in tmp_head_dtype_dict.keys()) - set(key for key in func_dict.keys())
+        tmp_set = set(key for key in tmp_dict.keys()) - set(key for key in tmp_head_dtype_dict.keys()) - set(
+            key for key in func_dict.keys())
         self.__sql_db.insert_head_dtypes(list(tmp_set))
         tmp_head_dtype_dict = self.__sql_db.get_head_dtype_dict()
         if not func_dict:

@@ -1,4 +1,5 @@
 import json
+
 import validators
 from csv2sqllike.PseudoSQLFromCSV import PsuedoSQLFromCSV
 from csv2sqllike.Transfer2SQLDB import Transfer2SQLDB
@@ -26,7 +27,8 @@ class QueueManager(Transfer2SQLDB):
             print("{} already exists".format(queue_table_name))
 
     def fill2queue(self, url_list: list, queue_table: str, table_name: str, order_list=list(), get_dict=dict(),
-                   click_dict=dict(), insert_dict=dict(), select_dict=dict(), xpath_dict=dict(), class_dict=dict()) -> None:
+                   click_dict=dict(), insert_dict=dict(), select_dict=dict(), xpath_dict=dict(),
+                   class_dict=dict()) -> None:
         tmp_sqllike = PsuedoSQLFromCSV("")
         tmp_sqllike.dtype = {'url': 'str', 'table_name': 'str', 'order_list': 'str', 'get_dict': 'str',
                              'click_dict': 'str', 'select_dict': 'str', 'insert_dict': 'str', 'xpath_dict': 'str',
