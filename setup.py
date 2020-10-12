@@ -19,7 +19,8 @@ setup_requires = [
     'bs4',
     'tqdm',
     'pyautogui',
-    'pyperclip'
+    'pyperclip',
+    'pillow'
 ]
 
 install_requires = [
@@ -30,7 +31,8 @@ install_requires = [
     'bs4',
     'tqdm',
     'pyautogui',
-    'pyperclip'
+    'pyperclip',
+    'pillow'
 ]
 
 setup(
@@ -38,7 +40,7 @@ setup(
     author='Junsang Park',
     author_email='publichey@gmail.com',
     url='https://github.com/hoosiki/selenium2mysql',
-    version='1.4.4',
+    version='1.4.5',
     long_description=readme,
     long_description_content_type="text/markdown",
     description='scraper using selenium for general purposes',
@@ -47,5 +49,5 @@ setup(
     include_package_date=False,
     setup_requires=setup_requires,
     install_requires=install_requires,
-    download_url='https://github.com/hoosiki/selenium2mysql/blob/master/dist/selenium2mysql-1.4.4.tar.gz'
+    download_url='https://github.com/hoosiki/selenium2mysql/blob/master/dist/selenium2mysql-1.4.5.tar.gz'
 )

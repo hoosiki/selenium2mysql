@@ -1,7 +1,9 @@
+import time
 from pathlib import Path
 
 import pyautogui
 import pyperclip
+from PIL import Image
 
 from .__init__ import Crawler
 
@@ -75,3 +77,37 @@ def type_using_pyautogui_with_class(crawler: Crawler, class_name: str, input_tex
         pyautogui.hotkey("command", "v")
     except Exception:
         print(Exception)
+
+
+def workflow(fig_dir: str, type_dict=dict()):
+    tmp_path = Path(fig_dir)
+
+    for path in list(str(x) for x in tmp_path.glob("*.jpg")):
+        im1 = Image.open(path)
+        im1.save(path.replace("jpg", "png"))
+
+    file_path_list = list(str(x) for x in tmp_path.glob("*.png"))
+
+    for i in range(2000):
+        tmp_c = str(tmp_path / Path("c{}.png".format(i)))
+        tmp_d = str(tmp_path / Path("d{}.png".format(i)))
+        if tmp_c in file_path_list:
+            tmp_position_c = pyautogui.locateCenterOnScreen(tmp_c)
+            print(tmp_position_c, tmp_c)
+            if tmp_position_c:
+                pyautogui.click(tmp_position_c)
+                time.sleep(0.1)
+            else:
+                print("cannot find pattern {}".format(str(tmp_c)))
+
+        if tmp_d in file_path_list:
+            tmp_position_d = pyautogui.locateCenterOnScreen(tmp_d)
+            print(tmp_position_d, tmp_d)
+            if tmp_position_d:
+                pyautogui.click(tmp_position_d)
+                pyautogui.press("enter")
+            else:
+                print("cannot find pattern {}".format(str(tmp_d)))
+
+        if "t{}".format(i) in type_dict.keys():
+            pyautogui.typewrite(type_dict["t{}".format(i)])
