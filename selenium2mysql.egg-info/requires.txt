@@ -4,3 +4,5 @@ dict
 validators
 bs4
 tqdm
+pyautogui
+pyperclip

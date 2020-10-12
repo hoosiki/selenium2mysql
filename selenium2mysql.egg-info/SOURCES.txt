@@ -6,6 +6,7 @@ selenium2mysql/QueueManager.py
 selenium2mysql/SeleniumCrawler.py
 selenium2mysql/SeleniumCrawlerForPhantom.py
 selenium2mysql/__init__.py
+selenium2mysql/crawltools.py
 selenium2mysql/info.py
 selenium2mysql/loop.py
 selenium2mysql.egg-info/PKG-INFO
