@@ -218,9 +218,6 @@ class SeleniumCrawlerForPhantom(webdriver.PhantomJS):
                     return None
                 self.click_button(click_dict[key], sleep_time=sleep_time)
             if key in insert_dict.keys():
-                if not self.scroll_down_xpath(insert_dict[key]):
-                    self.log_error()
-                    return None
                 self.insert_word(insert_dict[key][0], insert_dict[key][1])
             if key in select_dict.keys():
                 if not self.scroll_down_xpath(select_dict[key][0]):

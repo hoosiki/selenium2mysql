@@ -13,11 +13,12 @@ class Loop(object):
             tmp_result_list = list()
             tmp_df = None
             if tmp_list and tmp_list[0]:
-                self.__queue.execute("lock tables {} write;".format(queue_name))
-                tmp_df = self.__queue.execute(
-                    "select {} from {} limit {}".format(target_head, queue_name, assignment_number))
-                self.__queue.execute("delete from {} limit {}".format(queue_name, assignment_number))
-                self.__queue.execute("unlock tables;")
+                tmp_commands = "lock tables {} write;".format(queue_name)
+                tmp_commands += "select {} from {} limit {};".format(target_head, queue_name, assignment_number)
+                tmp_commands += "delete from {} limit {};".format(queue_name, assignment_number)
+                tmp_commands += "unlock tables;"
+                tmp_df = self.__queue.execute(tmp_commands)
+
                 for x in tmp_df[target_head]:
                     tmp_obj = func(x)
                     if tmp_obj:

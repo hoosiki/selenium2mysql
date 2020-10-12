@@ -4,6 +4,7 @@ from .QueueManager import QueueManager
 from .SeleniumCrawler import SeleniumCrawler
 from .SeleniumCrawlerForPhantom import SeleniumCrawlerForPhantom
 from .loop import Loop
+from .crawltools import *
 
 
 class Crawler(object):
