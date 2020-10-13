@@ -53,6 +53,7 @@ class SeleniumCrawlerForPhantom(webdriver.PhantomJS):
         try:
             self.execute_script("arguments[0].scrollIntoView(true);", WebDriverWait(self, self.__timeout).until(
                 EC.visibility_of_element_located((By.XPATH, xpath))))
+            self.execute_script("window.scrollBy(0, -150);")
             return True
         except Exception:
             print("can not find element : {}".format(xpath))
@@ -62,6 +63,7 @@ class SeleniumCrawlerForPhantom(webdriver.PhantomJS):
         try:
             self.execute_script("arguments[0].scrollIntoView(true);", WebDriverWait(self, self.__timeout).until(
                 EC.visibility_of_element_located((By.CLASS_NAME, class_name))))
+            self.execute_script("window.scrollBy(0, -150);")
             return True
         except Exception:
             print("can not find element : {}".format(class_name))
