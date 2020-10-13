@@ -96,7 +96,7 @@ def workflow(fig_dir: str, type_dict=dict()):
             print(tmp_position_c, tmp_c)
             if tmp_position_c:
                 pyautogui.click(tmp_position_c)
-                time.sleep(0.3)
+                time.sleep(0.5)
             else:
                 print("cannot find pattern {}".format(str(tmp_c)))
 
@@ -106,9 +106,10 @@ def workflow(fig_dir: str, type_dict=dict()):
             if tmp_position_d:
                 pyautogui.click(tmp_position_d)
                 pyautogui.press("enter")
-                time.sleep(0.3)
+                time.sleep(0.5)
             else:
                 print("cannot find pattern {}".format(str(tmp_d)))
 
         if "t{}".format(i) in type_dict.keys():
             pyautogui.typewrite(type_dict["t{}".format(i)])
+            time.sleep(0.5)
