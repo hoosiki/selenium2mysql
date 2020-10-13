@@ -18,7 +18,7 @@ def make_image_from_component_with_xpath(crawler: Crawler, xpath: str, image_pat
         tmp_file.close()
 
     except Exception as e:
-        print("cannot make image from xpath : {}".foramt(xpath))
+        print("cannot make image from xpath : {}".format(xpath))
         print(e)
 
 
@@ -31,7 +31,7 @@ def click_using_pyautogui_with_xpath(crawler: Crawler, xpath: str):
         Path("./tmp_image4crawl.png").unlink()
 
     except Exception as e:
-        print("cannot click xpath : {}".foramt(xpath))
+        print("cannot click xpath : {}".format(xpath))
         print(e)
 
 
@@ -42,7 +42,7 @@ def type_using_pyautogui_with_xpath(crawler: Crawler, xpath: str, input_text: st
         pyautogui.hotkey("command", "v")
 
     except Exception as e:
-        print("cannot type into xpath : {}".foramt(xpath))
+        print("cannot type into xpath : {}".format(xpath))
         print(e)
 
 
