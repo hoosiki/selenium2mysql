@@ -40,7 +40,7 @@ setup(
     author='Junsang Park',
     author_email='publichey@gmail.com',
     url='https://github.com/hoosiki/selenium2mysql',
-    version='1.5.0',
+    version='1.5.1',
     long_description=readme,
     long_description_content_type="text/markdown",
     description='scraper using selenium for general purposes',
@@ -49,5 +49,5 @@ setup(
     include_package_date=False,
     setup_requires=setup_requires,
     install_requires=install_requires,
-    download_url='https://github.com/hoosiki/selenium2mysql/blob/master/dist/selenium2mysql-1.5.0.tar.gz'
+    download_url='https://github.com/hoosiki/selenium2mysql/blob/master/dist/selenium2mysql-1.5.1.tar.gz'
 )

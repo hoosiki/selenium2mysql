@@ -197,7 +197,7 @@ class SeleniumCrawler(webdriver.Chrome):
     def click_then_select_from_dropdown(self, click_area_xpath: str, input_area_xpath: str, value: str):
         try:
             if self.scroll_down_xpath(click_area_xpath):
-                self.find_elements_by_xpath(click_area_xpath).click()
+                self.find_element_by_xpath(click_area_xpath).click()
                 if self.input_select_into_dropdown(input_area_xpath, value):
                     return True
             return False
