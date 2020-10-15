@@ -194,6 +194,33 @@ class SeleniumCrawler(webdriver.Chrome):
             print("selection failed in dropdown menu: {}".format(xpath))
             return False
 
+    def click_then_select_from_dropdown(self, click_area_xpath: str, input_area_xpath: str, value: str):
+        try:
+            if self.scroll_down_xpath(click_area_xpath):
+                self.find_elements_by_xpath(click_area_xpath).click()
+                if self.input_select_into_dropdown(input_area_xpath, value):
+                    return True
+            return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def sequential_click_fro_dropdown(self, first_click_area_xpath: str, second_click_area_xpath: str, tag: str, value: str):
+        try:
+            tmp_check_flag = False
+            for _ in range(2):
+                self.click_button(first_click_area_xpath)
+                tmp_tag = self.find_element_by_xpath(second_click_area_xpath)
+                tmp_tag_list = list(tmp_tag.find_elements_by_tag_name(tag))
+                for x in tmp_tag_list:
+                    if x.text == value:
+                        x.click()
+                        tmp_check_flag = True
+                        break
+            return tmp_check_flag
+        except Exception as e:
+            return False
+
     def set_timeout(self, timeout) -> None:
         self.set_page_load_timeout(timeout)
         self.__timeout = timeout
