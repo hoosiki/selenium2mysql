@@ -42,8 +42,8 @@ class SeleniumCrawler(webdriver.Chrome):
 
     def insert_word(self, xpath: str, value: str, sleep_time=0.1):
         self.dialog_block_wait_xpath(xpath)
-        tmp_tag = self.find_element_by_xpath(xpath)
         try:
+            tmp_tag = self.find_element_by_xpath(xpath)
             tmp_tag.send_keys(value)
         except Exception:
             print("can not send key to target : ", xpath, Exception)
@@ -86,8 +86,8 @@ class SeleniumCrawler(webdriver.Chrome):
 
     def click_button(self, button_xpath: str, sleep_time=0.1):
         self.dialog_block_wait_xpath(button_xpath)
-        tmp_tag = self.find_element_by_xpath(button_xpath)
         try:
+            tmp_tag = self.find_element_by_xpath(button_xpath)
             self.implicitly_wait(self.__timeout + random.uniform(0, 1))
             tmp_tag.click()
         except Exception:

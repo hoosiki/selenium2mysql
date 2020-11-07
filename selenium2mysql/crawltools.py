@@ -35,11 +35,11 @@ def click_using_pyautogui_with_xpath(crawler: Crawler, xpath: str):
         print(e)
 
 
-def type_using_pyautogui_with_xpath(crawler: Crawler, xpath: str, input_text: str):
+def type_using_pyautogui_with_xpath(crawler: Crawler, xpath: str, input_text: str, special_key="command"):
     try:
         pyperclip.copy(input_text)
         click_using_pyautogui_with_xpath(crawler, xpath)
-        pyautogui.hotkey("command", "v")
+        pyautogui.hotkey(special_key, "v")
 
     except Exception as e:
         print("cannot type into xpath : {}".format(xpath))
@@ -70,11 +70,11 @@ def click_using_pyautogui_with_class(crawler: Crawler, class_name: str):
         print(Exception)
 
 
-def type_using_pyautogui_with_class(crawler: Crawler, class_name: str, input_text: str):
+def type_using_pyautogui_with_class(crawler: Crawler, class_name: str, input_text: str, special_key="command"):
     try:
         pyperclip.copy(input_text)
         click_using_pyautogui_with_xpath(crawler, class_name)
-        pyautogui.hotkey("command", "v")
+        pyautogui.hotkey(special_key, "v")
     except Exception:
         print(Exception)
 
