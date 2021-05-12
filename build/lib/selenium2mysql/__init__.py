@@ -1,4 +1,4 @@
-from .crawltools import *
+#from .crawltools import *
 from .info import __VERSION__, __version__
 from .json2mysql import Json2Mysql
 from .loop import Loop
